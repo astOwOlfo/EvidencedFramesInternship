@@ -1,0 +1,12 @@
+-R ./ EF
+Categories.v
+Triposes.v
+EvidencedFrames.v
+ImplicativeAlgebras.v
+EFTriposEquivalence.v
+EFIAEquivalence.v
+#IATripos.v
+Expressions.v
+ComputationalSystem.v
+ComputationalSystemToEF.v
+CountableChoice.v
