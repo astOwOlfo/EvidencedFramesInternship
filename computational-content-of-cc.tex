@@ -1,0 +1,236 @@
+\documentclass{article}
+% \usepackage{prooftree}
+\usepackage{tipa}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{tikz-cd}
+\usepackage{graphicx}
+% \usepackage{prooftrees}
+\usepackage{bussproofs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+% \usepackage[a4paper, bindingoffset=0cm, left=1cm, right=1cm top=2cm, bottom=3cm, footskip=1cm]{geometry}
+
+% \usepackage{xcolor} \pagecolor[rgb]{0,0,0} \color[rgb]{1,1,1}
+
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{fact}{Fact}
+\newtheorem{corollary}{Corollary}
+\newtheorem{claim}{Claim}
+
+%\newcommand{\memo}{\mathsf{memo}}
+%\newcommand{\lookup}{\mathsf{lookup}}
+% \newcommand{\fail}{\mathsf{fail}}
+% \newcommand{\introexists}{\mathsf{intro}_\exists}
+\DeclareMathOperator{\makeaxiom}{\mathsf{makeaxiom}}
+\DeclareMathOperator{\axiom}{\mathsf{axiom}}
+\DeclareMathOperator{\fail}{\mathsf{fail}}
+\DeclareMathOperator{\assoc}{\mathsf{assoc}}
+\DeclareMathOperator{\fix}{\mathsf{fix}}
+\DeclareMathOperator{\mem}{\mathsf{mem}}
+\DeclareMathOperator{\iif}{\mathsf{if}\ }
+\newcommand{\tthen}{\mathbin{\ \mathsf{then}}\ }
+\newcommand{\eelse}{\mathbin{\ \mathsf{else}}\ }
+\DeclareMathOperator{\introexists}{\mathsf{intro}_\exists}
+\DeclareMathOperator{\introforall}{\mathsf{intro}_\forall}
+\DeclareMathOperator{\elimexists}{\mathsf{elim}_\exists}
+\DeclareMathOperator{\elimforall}{\mathsf{elim}_\forall}
+\newcommand{\nat}{\mathsf{nat}}
+
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Sigmapre}{\Sigma_{\mathrm{pre}}}
+\newcommand{\Sigmainf}{\Sigma_\infty}
+\newcommand{\Sigmapreinf}{\Sigma_{\mathrm{pre}, \infty}}
+\newcommand{\septop}{\mathcal{S}_\top}
+
+\title{Computational Content of the Axiom of Choice in Evidenced Frames}
+\author{Vladimir Ivanov}
+\date{\today}
+
+\begin{document}
+    
+\maketitle
+
+\section{The Computational System}
+
+The additional codes are $\makeaxiom$, $\axiom_n$ for $n \in \N$ and $c_f$ for $f : \N \rightarrow C$.
+The additional reduction relations are
+\begin{prooftree}
+    \AxiomC{}\UnaryInfC{$\makeaxiom \cdot \overline{k} \downarrow \axiom_k$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{}\UnaryInfC{$c_f \cdot \overline{n} \downarrow f(n)$}
+\end{prooftree}
+The additional termination rules are
+\begin{prooftree}
+    \AxiomC{}\UnaryInfC{$\makeaxiom \cdot \overline{k} \downarrow$}
+\end{prooftree}
+\begin{prooftree}
+    \AxiomC{}\UnaryInfC{$c_f \cdot \overline{n} \downarrow$}
+\end{prooftree}
+
+\section{The Evidenced Frame}
+
+We take the separator $\septop$. We interpret non determinism angelically.
+
+For all $n \in \N$, let $\nat_n$ be the predicate realized only by $\overline{n}$.
+We define universal quantification over naturals:
+\[\forall n. \phi_n\]
+as $\prod \{\nat_n \rightarrow \phi_n | n \in \N\}$
+
+We define $\bot$ as the predicate realized by all $\axiom_k, k \in \N$.
+
+We allow arbitrary expressions, and not just pairs of codes, on the left of $\downdownarrows$.
+
+\section{Pragmatics}
+
+We write $\lambda x_0 \dots x_k. e[x_0]\dots[x_k]$ for $c_{\lambda^k. e}$.
+Not that not all lambda terms can be easily encoded, for example, we can't encode $\lambda x. x (\lambda y. xy)$ and should work around by encoding it as $\lambda x. x ((\lambda x', y. x' y) x)$.
+We leave such conversions implicit.
+We do not always write the $\cdot$.
+
+We write $\exists x \in X. \phi_x$ for $\coprod \{\phi_x \mid x \in X\}$ and omit the $\in X$ when $X$ is clear from context.
+
+\section{Preliminaries}
+
+\begin{fact}
+    There exist codes $\introexists, \introforall, \elimexists, \elimforall \in \septop$ such that for all family of proposition $(\phi_n)_{n \in \N}$, all set $X$, and all family of propositions $(\psi_x)_{x \in X}$
+    \begin{enumerate}
+        \item If for all $n$, $c \cdot \overline{n} \downdownarrows \phi_n$, then $c \xrightarrow{\introforall} \forall n. \phi_n$.
+        \item If $c \models \forall n. \phi_n$, then for all $n$, $\elimforall \cdot c \cdot n \models \phi_n$.
+        \item For all $x$, $\psi_x \xrightarrow{\introexists} \exists x. \phi_x$.
+        \item If $\prod \{ \phi_x \mid x \in X \}$ has a realizer, then there exists $x \in X$ such that $\prod \{ \phi_x \mid x \in X \} \xrightarrow{\elimexists} \psi_x$
+    \end{enumerate}
+\end{fact}
+\begin{proof}
+    Take
+    \[\introforall := \lambda c. \lambda (e_{\mathsf{snd}}; c)\]
+    \[\elimforall := \lambda c, n. c\ n\ n\]
+    \[\introexists := \lambda c. \lambda(<|c, <|e_{\mathsf{id}}, e_\top|>; e_{\mathsf{eval}}|>; e_{\mathsf{eval}})\]
+    \[\elimexists := <|\lambda (e_{\mathsf{fst}}; e_\top; \lambda(e_{\mathsf{fst}; e_{\mathsf{id}}})), |>; e_{\mathsf{eval}}\]
+\end{proof}
+
+\begin{definition}[Behaves Like]
+    We say that code $c_f'$ behaves like code $c_f$ if $\forall c_a, c_r. c_f \cdot c_a \downarrow c_r \Rightarrow c_f' \cdot c_a \downarrow c_r$.
+    If we have an equivalence instead of an implication, we say that they are extensionally equal.
+\end{definition}
+
+\begin{lemma}\label{substaxiomcongr}
+    If $c \cdot \overline{n} \downdownarrows \bot$ for all $k$ and $e \downdownarrows \bot$, then $e[\makeaxiom := c] \downdownarrows \bot$.
+\end{lemma}
+\begin{proof}
+    Structural induction over the proof of $e \downarrow \axiom_k$.
+\end{proof}
+
+\begin{lemma}\label{extcongr}
+    If $c$ and $c'$ are extensionally equal, so are $e[x := c]$ and $e[x := c']$ for all expression $e$ with a hole $x$.
+\end{lemma}
+\begin{proof}
+    Structural induction over the proof of $e[x := c] \downarrow c_r$.
+\end{proof}
+
+\section{The Proof}
+
+Let
+
+\[ KCC' := (\forall n. \nabla \exists i. \neg R(n, i)) \Rightarrow \nabla \exists f. \forall n. \neg R(n, f(n)) \]
+\[ \fix_f := (\lambda x. f (x x)) (\lambda x. f (x x)) \]
+\[ \fix := \lambda f. \fix_f \]
+\[ \Phi_{H, P, \phi, L} := P (\introexists (\introforall (\lambda n. \assoc L\ n\ (\lambda \_. (\lambda m. H m (\lambda q. \phi\ ((m, q):L))) n)))) \]
+\[ \Phi_{H, P} := \fix_{\lambda \phi L. \Phi_{H, P, \phi, L}} \]
+\[H \models \forall n. \nabla \exists i. \neg R(n, i)\]
+\[P \models \neg \exists f. \forall n. \neg R(n, f(n))\]
+
+It suffices to prove the following lemma, the rest of the proof is stricly identical to the original paper.
+
+\begin{definition}[Cache]
+    A cache is a church encoded list $L$ of church encoded pairs of the form $(\overline{n}, q), n \in \N, q \in C$ such that
+    \begin{itemize}
+        \item For all $(\overline{n}, q) \in L$ there exists $i$ such that $q \models R(n, i)$.
+        \item The first elements of pairs in $L$ are pairwise distinct.
+    \end{itemize}
+\end{definition}
+
+\begin{lemma}\label{addlist}
+    Let $L$ be a chache such that $\Phi_{P, H} \cdot L \not\downdownarrows \bot$. Then there exist $n$ and $q$ such that $(n, q):L$ is a cache and $\Phi_{P, H} \cdot ((n, q):L) \not\downdownarrows \bot$.
+\end{lemma}
+
+
+\begin{proof}
+    Define $f_0(n)$ to be $i$ such that $q \models \neg R(n, i)$ if $(n, i) \in L$ for some $i$, and take $f_0(n)$ to be arbitrary if $n \notin I$.
+
+    \begin{claim}\label{axiomred}
+        We have
+        \[ P (\introexists (\introforall (\lambda n. \assoc L\ n\ (\lambda \_. \makeaxiom n)))) \downdownarrows \bot\]
+    \end{claim}
+    Let $n \in \N$.
+    Since $\axiom_n \models \bot$, $\lambda \_. \makeaxiom \overline{n} \models \neg R(n, i)$ for all $i$.
+    Thus, \[ \assoc L\ \overline{n}\ (\lambda \_. \makeaxiom \overline{n}) \models \neg R(n, f(n)) \], by the previous discussion if $n$ is not in $L$ and by the definition of a cache if $n$ is in $L$.
+    This holds for all $n$, so \[ \introforall (\lambda n. \assoc L\ n\ (\lambda \_. \makeaxiom n)) \models \forall n. \neg R(n, f_0(n)) \].
+    Therefore, \[ \introexists (\introforall (\lambda n. \assoc L\ n\ (\lambda \_. \makeaxiom n))) \models \exists f. \forall n. \neg R(n, f(n)) \].
+    This concludes since $P \models \neg \exists f. \forall n. \neg R(n, f(n))$.
+
+    \begin{claim}\label{notred}
+        $\Phi_{H, P, \Phi_{H, P}, L} \not\downdownarrows \bot$, that is (unfolding $\Phi$),
+    \[ P (\introexists (\introforall (\lambda n. \assoc L\ n\ (\lambda \_. (\lambda m. H\ m\ (\lambda q. \Phi_{H, P}\ ((m, q):L)) n))))) \not\downdownarrows \bot\]
+    \end{claim}
+    \begin{proof}
+        Suppose for the sake of contradiction $\Phi_{H, P, \Phi_{H, P}, L} \downdownarrows \bot$, that is, $\Phi_{H, P, \Phi_{H, P}, L} \downarrow \axiom_k$ for some $k$.
+        So $(\lambda \phi L'. \Phi_{H, P, \phi L'}) \cdot \Phi_{H, P} \cdot L \downarrow \axiom_k$, and since $\Phi_{H, P} = \fix_{\lambda \phi L'. \Phi_{H, P, \phi, L'}}$, we have $\Phi_{H, P} \cdot L \downarrow \axiom_k$, which was supposed to not hold.
+    \end{proof}
+
+    \begin{claim}\label{new}
+        There exists $k_{new} \in \N$ such that
+        \[ \elimforall H\ \overline{k_{new}}\ (\lambda q. \Phi_{H, P} ((\overline{k_{new}}, q):L)) \not\downdownarrows \bot \]
+    \end{claim}
+    \begin{proof}
+        Suppose that $ \elimforall H\ \overline{k}\ (\lambda q. \Phi_{H, P} ((\overline{k}, q):L)) \downarrow \axiom_l$ for some $l$ for all $k$.
+        It now suffices to find a contradiction.
+        We have $c \cdot \overline{k} \downarrow \axiom_l$ for some $l$ for all $k$, where $c := \lambda m. \elimforall H\ m\ (\lambda q. \Phi_{H, P} ((m, q):L))$.
+        Thus, $c$ behaves like $\makeaxiom$, so by applying \cref{substaxiomcongr} to \cref{axiomred} contradicts \cref{notred}.
+    \end{proof}
+
+    Now, let $k$ be as in \cref{new}.
+    
+    \begin{claim}\label{newrealizer}
+        There exists a $q \in C$ such that $q \models \neg R(k, i)$ for some $i$.
+    \end{claim}
+    \begin{proof}
+        Suppose, for the sake of contradiction, that there is no such $q$.
+        Since $H \models \forall k. \nabla \exists i. \neg R(n, i)$, it follows from \cref{new} that $\lambda q. \Phi_{H, P} ((k, q):L)$ does not realize $\neg \exists i. \neg R(k, i)$.
+        Thus, there exists at least one realizer of $\exists i. \neg R(k, i)$ (since otherwise any code would realize its negation).
+        Now, $\exists i \neg R(k, i) \xrightarrow{\elimexists} \neg R(k, i)$ for some $i$, which concludes that there exists a realizer of $\neg R(k, i)$ for some $i$.
+    \end{proof}
+
+    \begin{claim}\label{newdifferent}
+        $k$ is not in $L$.
+    \end{claim}
+    \begin{proof}
+        For all $n$, $\assoc L\ \overline{n}\ (\lambda m. \iif \mem m\ L \tthen (\lambda x. x) \eelse \makeaxiom m)$ realizes $\neg R(n, f_0(n))$, by the definition of a cache if $n$ is in $L$ and since it the else branch is taken ortherwise.
+        Thus, \[P (\introexists (\introforall (\lambda n. \assoc L\ n\ (\lambda m. \iif \mem m\ L \tthen (\lambda x. x) \eelse \makeaxiom n)))) \downarrow \axiom\]
+        since it realizes $\bot$.
+        Then, since for all $n$, $\assoc L\ n\ \makeaxiom \models \bot$, we have \[P (\introexists (\introforall (\lambda n. \assoc L\ n\ (\lambda m. \makeaxiom)))) \downarrow \axiom\]
+        Then, by \cref{substaxiomcongr} and \cref{extcongr},
+        \[\iif (\mem \overline{k}\ L) \tthen (\lambda x. x) \eelse \makeaxiom \overline{k} \downdownarrows \bot\]
+        Thus, $k$ is not in $L$ since $\lambda x. x \not\models \bot$.
+    \end{proof}
+
+    We are finished by taking $n = k_{new}$ from \cref{new} and $q$ from \cref{newrealizer}.
+\end{proof}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
