@@ -11,6 +11,13 @@
 \usepackage{bussproofs}
 \usepackage{hyperref}
 \usepackage{cleveref}
+
+\usepackage[nomargin,inline, draft]{fixme}
+% fixme package settings
+\fxusetheme{color}
+\fxuseenvlayout{color}
+\FXRegisterAuthor{em}{aem}{\color{purple}[\'E]}
+\FXRegisterAuthor{vi}{avi}{\color{teal}[V]}
 % \usepackage[a4paper, bindingoffset=0cm, left=1cm, right=1cm top=2cm, bottom=3cm, footskip=1cm]{geometry}
 
 % \usepackage{xcolor} \pagecolor[rgb]{0,0,0} \color[rgb]{1,1,1}
@@ -75,21 +82,25 @@ The additional termination rules are
 
 \section{The Evidenced Frame}
 
-We take the separator $\septop$. We interpret non determinism angelically.
+We take the separator $\septop$. We interpret non determinism angelically\emnote{is there non-deterministic computations?}.
+
 
 For all $n \in \N$, let $\nat_n$ be the predicate realized only by $\overline{n}$.
 We define universal quantification over naturals:
 \[\forall n. \phi_n\]
 as $\prod \{\nat_n \rightarrow \phi_n | n \in \N\}$
+\emnote{$\prod \{\nat_n \supset \phi_n | n \in \N\}$}
 
 We define $\bot$ as the predicate realized by all $\axiom_k, k \in \N$.
 
-We allow arbitrary expressions, and not just pairs of codes, on the left of $\downdownarrows$.
+We allow arbitrary expressions, and not just pairs of codes, on the left of $\downdownarrows$\emnote{You mean applications of en expression to an expression?}.
 
 \section{Pragmatics}
 
 We write $\lambda x_0 \dots x_k. e[x_0]\dots[x_k]$ for $c_{\lambda^k. e}$.
-Not that not all lambda terms can be easily encoded, for example, we can't encode $\lambda x. x (\lambda y. xy)$ and should work around by encoding it as $\lambda x. x ((\lambda x', y. x' y) x)$.
+Not that not all lambda terms can be easily encoded, for example, we can't encode $\lambda x. x (\lambda y. xy)$\emnote{why? if you take: 
+$e_2\triangleq 1\cdot 0$, $e_1 \triangleq \lambda.e_2$ and $e_0 \triangleq 0\cdot e_1$, you can encode it with $c_{\lambda.e_0}$, no?}
+and should work around by encoding it as $\lambda x. x ((\lambda x', y. x' y) x)$.
 We leave such conversions implicit.
 We do not always write the $\cdot$.
 
@@ -100,9 +111,10 @@ We write $\exists x \in X. \phi_x$ for $\coprod \{\phi_x \mid x \in X\}$ and omi
 \begin{fact}
     There exist codes $\introexists, \introforall, \elimexists, \elimforall \in \septop$ such that for all family of proposition $(\phi_n)_{n \in \N}$, all set $X$, and all family of propositions $(\psi_x)_{x \in X}$
     \begin{enumerate}
-        \item If for all $n$, $c \cdot \overline{n} \downdownarrows \phi_n$, then $c \xrightarrow{\introforall} \forall n. \phi_n$.
-        \item If $c \models \forall n. \phi_n$, then for all $n$, $\elimforall \cdot c \cdot n \models \phi_n$.
-        \item For all $x$, $\psi_x \xrightarrow{\introexists} \exists x. \phi_x$.
+        \item If for all $n$, $c \cdot \overline{n} \downdownarrows \phi_n$, then $c \xrightarrow{\introforall} \forall n. \phi_n$. \emnote{$c$ is not a formula of the language, what do you mean?}
+        \item If $c \models \forall n. \phi_n$ \emnote{what is the definition of $c\models \phi$?}
+        , then for all $n$, $\elimforall \cdot c \cdot n \models \phi_n$.
+        \item For all $x$, $\psi_x \xrightarrow{\introexists} \exists x. \phi_x$.\emnote{what is the relation between $\psi$ and $\phi$?}
         \item If $\prod \{ \phi_x \mid x \in X \}$ has a realizer, then there exists $x \in X$ such that $\prod \{ \phi_x \mid x \in X \} \xrightarrow{\elimexists} \psi_x$
     \end{enumerate}
 \end{fact}
@@ -112,11 +124,13 @@ We write $\exists x \in X. \phi_x$ for $\coprod \{\phi_x \mid x \in X\}$ and omi
     \[\elimforall := \lambda c, n. c\ n\ n\]
     \[\introexists := \lambda c. \lambda(<|c, <|e_{\mathsf{id}}, e_\top|>; e_{\mathsf{eval}}|>; e_{\mathsf{eval}})\]
     \[\elimexists := <|\lambda (e_{\mathsf{fst}}; e_\top; \lambda(e_{\mathsf{fst}; e_{\mathsf{id}}})), |>; e_{\mathsf{eval}}\]
+    \emnote{what does the notation $<|c,|>$ stand for?}    
 \end{proof}
 
 \begin{definition}[Behaves Like]
     We say that code $c_f'$ behaves like code $c_f$ if $\forall c_a, c_r. c_f \cdot c_a \downarrow c_r \Rightarrow c_f' \cdot c_a \downarrow c_r$.
     If we have an equivalence instead of an implication, we say that they are extensionally equal.
+    \emnote{I guess you could define this as an ordering relation $ c'\preccurlyeq c$ on codes, and indeed the induced equality would be the extensional equality on codes.}
 \end{definition}
 
 \begin{lemma}\label{substaxiomcongr}
@@ -145,12 +159,14 @@ Let
 \[H \models \forall n. \nabla \exists i. \neg R(n, i)\]
 \[P \models \neg \exists f. \forall n. \neg R(n, f(n))\]
 
+\emnote{what is $\assoc$?}
+
 It suffices to prove the following lemma, the rest of the proof is stricly identical to the original paper.
 
 \begin{definition}[Cache]
     A cache is a church encoded list $L$ of church encoded pairs of the form $(\overline{n}, q), n \in \N, q \in C$ such that
     \begin{itemize}
-        \item For all $(\overline{n}, q) \in L$ there exists $i$ such that $q \models R(n, i)$.
+        \item For all $(\overline{n}, q) \in L$ there exists $i$\emnote{what is the type of $i$?} such that $q \models R(n, i)$. \emnote{$q \models \neg R(n, i)$ ?}
         \item The first elements of pairs in $L$ are pairwise distinct.
     \end{itemize}
 \end{definition}
@@ -161,7 +177,7 @@ It suffices to prove the following lemma, the rest of the proof is stricly ident
 
 
 \begin{proof}
-    Define $f_0(n)$ to be $i$ such that $q \models \neg R(n, i)$ if $(n, i) \in L$ for some $i$, and take $f_0(n)$ to be arbitrary if $n \notin I$.
+    Define $f_0(n)$ to be $i$ such that $q \models \neg R(n, i)$ if $(n, i)\in L$\emnote{$(n,q)\in L$?}  for some $i$ (\emnote{how do you know that such $i$ exists?}, and take $f_0(n)$ to be arbitrary if $n \notin I$.
 
     \begin{claim}\label{axiomred}
         We have
