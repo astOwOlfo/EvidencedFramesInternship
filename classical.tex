@@ -1,0 +1,270 @@
+\documentclass{article}
+% \usepackage{prooftree}
+\usepackage{tipa}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{tikz-cd}
+\usepackage{graphicx}
+% \usepackage{prooftrees}
+\usepackage{bussproofs}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{soul}
+% \usepackage[a4paper, bindingoffset=0cm, left=1cm, right=1cm top=2cm, bottom=3cm, footskip=1cm]{geometry}
+
+% \usepackage{xcolor} \pagecolor[rgb]{0,0,0} \color[rgb]{1,1,1}
+
+\newcommand{\successor}{\mathsf{succ}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\nat}{\mathsf{nat}}
+\newcommand{\recN}{\mathsf{rec}_{\mathbb{N}}}
+\newcommand{\bool}{\mathsf{bool}}
+\newcommand{\true}{\mathsf{true}}
+\newcommand{\false}{\mathsf{false}}
+\newcommand{\recbool}{\mathsf{rec_{bool}}}
+\newcommand{\proc}[2]{\langle{#1}\mid{#2}\rangle}
+\newcommand{\emptystack}{\pi_\mathsf{empty}}
+\newcommand{\iif}{\mathsf{if}}
+\newcommand{\eelse}{\mathsf{else}}
+\newcommand{\tthen}{\mathsf{then}}
+\newcommand{\depforall}[1]{\forall^\N #1.}
+\newcommand{\pole}{\bot\mkern-10mu\bot}
+\newcommand{\realizes}{\Vdash}
+\newcommand{\oracle}[2]{\lambda\mkern-15mu\lambda\ #1. #2}
+\newcommand{\cc}{\mathsf{cc}}
+\newcommand{\cont}{\mathsf{k}}
+
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{fact}{Fact}
+\newtheorem{corollary}{Corollary}
+\newtheorem{claim}{Claim}
+\newtheorem{property}{Propetry}
+
+\title{Computational Content of the Classical Axiom of Countable Choice}
+\author{Vladimir Ivanov}
+\date{\today}
+
+\begin{document}
+    
+\maketitle
+
+\section{The Computational System}
+
+\begin{definition}[Lambda Terms]
+    Let $\mathsf{Var}$ be a countably infinite set of variable names.
+    The notions of free variable and closed term are defined as usual.
+    We define the set $\Lambda_{open}$ of not necessarily closed lambda terms, and take $\Lambda$ to be the set of closed terms of $\Lambda_{open}$. When we say lambda term, we mean closed lambda term. $\Lambda_{open}$ is defined as follows
+    \begin{align*}
+        \Lambda_{open} := & \mid var \in \mathsf{Var} \\
+        & \mid \Lambda_{open}\ \Lambda_{open} \\
+        & \mid \lambda x. \Lambda_{open} & \text{where $x \in \mathsf{Var}$} \\
+        & \mid 0 \mid \successor \mid \recN & \text{constructors and the recursor for $\N$}\\
+        & \mid \true \mid \false \mid \recbool & \text{constructors and the recursor for $\bool$}\\
+        & \mid \Phi & \text{the bar recursion operator} \\
+        & \mid \cc \mid \cont_\pi & \text{where $\pi$ is a stack}
+    \end{align*}
+\end{definition}
+
+\begin{definition}[Stacks]
+    A stack is a finite list of closed lambda terms.
+    We let $\Pi$ be the set of all stacks.
+    We write $t \cdot \pi$ for prepending a lambda term to a stack and $\pi \cdot \pi'$ for concatenating two stacks. We write $\emptystack$ for the empty stack.
+    We sometimes omit the $\cdot$.
+\end{definition}
+
+\begin{definition}[Process]
+    A process is a pair $\proc{t}{\pi}$ of a lambda term and a stack.
+    We write $\Lambda \times \Pi$ for the set of all processes.
+\end{definition}
+
+\begin{definition}[Reduction Relation]
+    The big step reduction relation $\succ$ is the smallost transitive and reflexive relation which staisfies:
+    \begin{align*}
+        \proc{t u}{\pi} & \succ \proc{t}{u\pi} \\
+        \proc{\lambda x. t}{u\pi} & \succ \proc{t[x := u]}{\pi} \\
+        \proc{\recN}{t_0 \cdot t_\successor \cdot 0 \cdot \pi} & \succ \proc{t_0}{\pi} \\
+        \proc{\recN}{t_0 \cdot t_\successor \cdot \successor\ n \cdot \pi} & \succ \proc{\recN\ (t_\successor\ t_0)\ t_\successor\ n}{\pi} \\
+        \proc{\recbool}{t_\true \cdot t_\false \cdot \true \cdot \pi} & \succ \proc{t_\true}{\pi} \\
+        \proc{\recbool}{t_\true \cdot t_\false \cdot \false \cdot \pi} & \succ \proc{t_\false}{\pi} \\
+        \proc{\Phi}{H \cdot P \cdot C \cdot \overline{k}} & \succ P\ (C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ \overline{k+1}\ (C; \ge \overline{k} \mapsto z))) \\
+        \proc{\cc}{t \cdot \pi} & \succ \proc{t}{\cont_\pi \cdot \pi} \\
+        \proc{\cont_\pi}{t \cdot \pi'} & \succ \proc{t}{\pi}
+    \end{align*}
+    All the syntactic sugar used in the rule for $\Phi$ will be defined in the following subsection.
+\end{definition}
+
+For $t, u \in \Lambda$, we write $t \succ u$ for $\forall \pi \in \Pi. \proc{t}{\pi} \succ \proc{u}{\pi}$.
+
+\subsection{Syntactic Sugar and Special Terms}
+
+\begin{description}
+    \item[naturals] For $n \in \N$, we write $\overline{k}$ for $\successor^n\ 0$.
+    \item[if then else] We write $\iif\ t\ \tthen\ u\ \eelse\ v$ for $\recbool\ u\ v\ t$.
+    \item[comparison] For $t, u \in \Lambda$, we use $\recN$ to define a term $t \le u$ such that for all $n, m \in \Lambda$
+    \begin{align*}
+        \overline{n} \le \overline{m} & \succ \true & \text{if $n \le m$} \\
+        \overline{n} \le \overline{m} & \succ \false & \text{otherwise}
+    \end{align*}
+    \item[function cons] Let $f, t, n \in \Lambda$. Define
+    \[(f; \ge n \mapsto t) \in \Lambda := \lambda k.\ \iif\ n\ \le\ k\ \tthen\ t\ \eelse\ f\ k\]
+    
+    This term satisfies, for all $f, t \in \Lambda, n, m \in \N$,
+    \begin{align*}
+        (f; \ge \overline{n} \mapsto t)\ \overline{m} & \succ f\ \overline{m} & \text{if $m < n$} \\
+        (f; \ge \overline{n} \mapsto t)\ \overline{m} & \succ t & \text{if $m \ge n$}
+    \end{align*}
+
+    We omit parentheses and write $(f; \ge k_1 \mapsto t_1; \ge k_2 \mapsto t_2; \dots; \ge k_n \mapsto t_n)$ for $((\dots((f; \ge k_1 \mapsto t_1); \ge k_2 \mapsto t_2))\dots)); \ge k_n \mapsto t_n)$
+\end{description}
+
+\section{Realizability}
+
+\subsection{Logic}
+
+We take some model of $\N$.
+
+Atoms are defined as equalities of expressions built from variables and some fixed (possibly zero-ary) functions $f_1 : \N^{k_1} \rightarrow \N, \dots, f_n : \N^{k_n} \rightarrow \N$.
+We define formulas as
+\begin{align*}
+    F, G, \dots := & \mid A & \text{where $A$ is an atom} \\
+    & \mid x & \text{where $x$ is a variable name taken from countably infinite set} \\
+    & \mid \forall x \in X. F & \text{where $X$ is a set and $x$ is a variable name free in $F$} \\
+    & \mid \depforall{n} F & \text{where $x$ is a variable name free in $F$} \\
+    & \mid F \rightarrow G
+\end{align*}
+Later, when we say formula, we mean formula with no free variables.
+
+Note that, since $\cc$ realizes Peirce's law, we do not need existential quantification since we can encode it as $\neg\forall\neg$ by De Morgan's law.
+
+\subsection{The Realizability Relation}
+
+Throughout the rest of the section, we fix a pole $\pole \subseteq \Lambda \times \Pi$ be a set of processes which is closed by anti-reduction, that is, for all processos $p$ and $q$, if $p \succ q$ and $q \in \pole$ then $p \in \pole$.
+
+For a formula $F$, define $\Vert F \Vert \subseteq \Pi$ and $\vert F \vert \subseteq \Lambda$ by structural induction over the syntax of $F$ as follows:
+\begin{align*}
+    \Vert \bot \Vert & := \Pi \\
+    \Vert a \Vert & := \Pi\ \ \ \text{if $a$ is an atom which is true in the model of $\N$} \\
+    \Vert a \Vert & := \emptyset\ \ \ \text{if $a$ is an atom which is false in the model of $\N$} \\
+    \Vert \forall x \in X. G \Vert & := \bigcap_{x_0 \in X} \Vert G[x := x_0] \Vert \\
+    \Vert G \rightarrow H \Vert & := \{ t\pi \mid t \in \vert G \vert, \pi \in \Vert H \Vert \} \\
+    \Vert \depforall{x} G \Vert & := \{ \overline{n}\pi \mid n \in \N, \pi \in \Vert G[x := n] \Vert \} \\
+    \vert F \vert & := \{ t \in \Lambda \mid \forall \pi \in \Vert F \Vert. \proc{t}{\pi} \in \pole \}
+\end{align*}
+
+\subsection{Properties}
+
+\begin{property}
+    If $t \succ u$ and $u \realizes t$, then $t \realizes u$.
+\end{property}
+
+\begin{property}\label{impliesintro}
+    $t \realizes A \rightarrow B$ if and only if $\forall u \realizes A. t u \realizes B$.
+\end{property}
+
+\begin{property}
+    If $t \realizes \bot$ then $t \realizes F$ for all formula $F$.
+\end{property}
+
+\begin{property}[Consistency]
+    There is no realizer of $\bot$.
+\end{property}
+
+\begin{property}[Continuity]
+    Let $t$ be a term with one free variable $x$.
+    Let $F$ be a formula.
+    Let $u_0, u_1, \dots \in \Lambda$.
+    Suppose that $t[x := \oracle{n}{u_n}] \realizes F$.
+    Then there exists $N \in \N$ such that for all $f \in \Lambda$ such that $\forall n < N.\ f\ \overline{n} \succ u_n$ we have $t[x := f] \realizes F$.
+\end{property}
+
+
+\section{Realizability of Countable Choice}
+
+Throughout this section, let $I$ be a set and $R \in ???$.
+We define
+\[AC_\N := (\forall n. \neg \forall i. \neg R(n, i)) \rightarrow \neg \forall f. \neg \forall n. R(n, f(n))\]
+
+\begin{theorem} We have
+    \[ \lambda H.\ \lambda P.\ \Phi\ H\ P\ \overline{0}\ \overline{0} \realizes AC_\N \]
+\end{theorem}
+
+\begin{proof}
+
+Let
+\begin{align*}
+    H & \realizes \forall n. \neg \forall i. \neg R(n, i) \\
+    P & \realizes \forall f. \neg \depforall{n} R(n, f(n))
+\end{align*}
+
+By \cref{impliesintro}, it is necessarily and sufficient to show that
+\[\Phi\ H\ P\ \overline{0}\ \overline{0} \realizes \bot \]
+
+\begin{definition}[$<k$ -cache]
+    Let $k \in \N$. A $<k$ -cache is a term $C \in \Lambda$ such that $\forall n < k. \exists i. C\ \overline{n} \realizes R(n, i)$.
+\end{definition}
+
+\begin{lemma}\label{growcache}
+    Let $k \in \N$.
+    Let $C$ be a $< k$ -cache.
+    Suppose that $\Phi\ H\ P\ C\ \overline{k} \not\realizes \bot$.
+    Then, there exists $i_k$ and $r_k \realizes R(k, i_k)$ such that $\Phi\ H\ P\ (C; \ge \overline{k} \mapsto r_k)\ \overline{k+1} \not\realizes \bot$.
+
+    Note that $(C; \ge \overline{k} \mapsto r_k)$ is then a $< k + 1$ -cache.
+\end{lemma}
+
+\begin{proof}
+    \ul{There exist $r_k \in \Lambda, i_k \in I$ such that $r_k \realizes R(k, i_k)$.} Indeed, if none did exists, then for all $i$, any term would realize $\neg R(k, i)$, thus, any term would realize $\forall i. \neg R(k, i)$. Thus, $H$ applied to any term would realize $\bot$, which contradicts consistency.
+
+    \ul{Now, suppose that for all $r_k, i_k$ such that $r_k \realizes R(k, i_k)$},
+    \[ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto r_k)\ \overline{k+1} \realizes \bot \]
+    \ul{it suffices to find a contradiction.} Then, for all $i$,
+    \[ \lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes \neg R(k, i) \]
+    and so by the hypothesis on $H$ and then by ???,
+    \begin{align*}
+        H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes \neg R(k, i)) & \realizes \bot \\
+        & \realizes R(n, i) & \text{for all $n$ and $i$}
+    \end{align*}
+
+    Now, by definition of a cache, for all $n < k$, $C\ \overline{n} \realizes R(n, i)$ for some $i$.
+    Let $f(n)$ be such an $i$ for $n < k$ and be arbitrary for $n \ge k$.
+    Then,
+    \[(C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes \neg R(k, i))) \realizes \depforall{n} R(n, f(n))\]
+    since this term applied to $n < k$ realizes $R(n, f(n))$ by the definition of a cache and this term applied to $n \ge k$ realizes $R(n, f(n))$ by the previous discussion.
+    Thus,
+    \[P\ (C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes \neg R(k, i))) \realizes \depforall{n} R(n, f(n)) \realizes \bot\]
+    But
+    \[\Phi\ H\ P\ C\ \overline{k} \succ P\ (C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1}))\]
+    So
+    \[\Phi\ H\ P\ C\ \overline{k} \realizes \bot\]
+    which was supposed to not hold.
+\end{proof}
+
+Now, suppose
+\[ \Phi\ H\ P\ \overline{0}\ \overline{0} \not\realizes \bot \]
+it is necessary and sufficient to find a contradiction.
+
+By applying \cref{growcache} repeatedly, we get a sequence $r_0, r_1, \dots$ such that each $r_n$ realizes $R(n, i)$ for some $i$.
+For each $n$, take $f_0(n)$ to be such an $i$.
+
+Then, for all $n$, $(\oracle{n}{r_n}) \overline{n} \realizes R(n, f_0(n))$.
+Thus, $\oracle{n}{r_n} \realizes \depforall{n} R(n, f_0(n))$ and so \[P\ (\oracle{n}{r_n}) \realizes \bot\]
+
+But then, by continuity, there exists $N$ such that for all $C$, if $\forall n < N.\ C\ \overline{n} \succ r_n$ then $P\ C \realizes \bot$. Thus, taking $C = (\overline{0}; \ge \overline{0} \mapsto r_0; \ge \overline{1} \mapsto r_1; \dots; \ge \overline{N-1} \mapsto r_{N-1}; \ge \overline{N} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ \overline{N+1}\ (C; \ge \overline{k} \mapsto z)))$, we have $P\ C \realizes \bot$ since $\forall n < N. C\ \overline{n} \succ r_n$.
+But $\Phi\ H\ P\ \overline{0}\ \overline{0} \succ P\ C$, so $\Phi\ H\ P\ overline{0}\ \overline{0} \realizes \bot$, which was supposed to not hold.
+
+\end{proof}
+
+\end{document}
+
+
+
+
+
+
+
+
+
