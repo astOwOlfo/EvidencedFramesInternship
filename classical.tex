@@ -149,7 +149,7 @@ For a formula $F$, define $\Vert F \Vert \subseteq \Pi$ and $\vert F \vert \subs
     \Vert \bot \Vert & := \Pi \\
     \Vert a \Vert & := \Pi\ \ \ \text{if $a$ is an atom which is true in the model of $\N$} \\
     \Vert a \Vert & := \emptyset\ \ \ \text{if $a$ is an atom which is false in the model of $\N$} \\
-    \Vert \forall x \in X. G \Vert & := \bigcap_{x_0 \in X} \Vert G[x := x_0] \Vert \\
+    \Vert \forall x \in X. G \Vert & := \bigcup_{x_0 \in X} \Vert G[x := x_0] \Vert \\
     \Vert G \rightarrow H \Vert & := \{ t\pi \mid t \in \vert G \vert, \pi \in \Vert H \Vert \} \\
     \Vert \depforall{x} G \Vert & := \{ \overline{n}\pi \mid n \in \N, \pi \in \Vert G[x := n] \Vert \} \\
     \vert F \vert & := \{ t \in \Lambda \mid \forall \pi \in \Vert F \Vert. \proc{t}{\pi} \in \pole \}
@@ -184,7 +184,7 @@ For a formula $F$, define $\Vert F \Vert \subseteq \Pi$ and $\vert F \vert \subs
 
 \section{Realizability of Countable Choice}
 
-Throughout this section, let $I$ be a set and $R \in ???$.
+Throughout this section, let $I$ be a set and $R: \N \times I \rightarrow \mathcal{P}(\Pi)$.
 We define
 \[AC_\N := (\forall n. \neg \forall i. \neg R(n, i)) \rightarrow \neg \forall f. \neg \forall n. R(n, f(n))\]
 
