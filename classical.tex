@@ -42,7 +42,14 @@
 \newtheorem{fact}{Fact}
 \newtheorem{corollary}{Corollary}
 \newtheorem{claim}{Claim}
-\newtheorem{property}{Propetry}
+\newtheorem{property}{Property}
+
+\usepackage[nomargin,inline, draft]{fixme}
+% fixme package settings
+\fxusetheme{color}
+\fxuseenvlayout{color}
+\FXRegisterAuthor{em}{aem}{\color{purple}[\'E]}
+\FXRegisterAuthor{vi}{avi}{\color{teal}[V]}
 
 \title{Computational Content of the Classical Axiom of Countable Choice}
 \author{Vladimir Ivanov}
@@ -73,7 +80,7 @@
     A stack is a finite list of closed lambda terms.
     We let $\Pi$ be the set of all stacks.
     We write $t \cdot \pi$ for prepending a lambda term to a stack and $\pi \cdot \pi'$ for concatenating two stacks. We write $\emptystack$ for the empty stack.
-    We sometimes omit the $\cdot$.
+    We sometimes omit the $\cdot$. \emnote{Ce serait mieux en écrivant toujours $\cdot$!}
 \end{definition}
 
 \begin{definition}[Process]
@@ -82,20 +89,23 @@
 \end{definition}
 
 \begin{definition}[Reduction Relation]
-    The big step reduction relation $\succ$ is the smallost transitive and reflexive relation which staisfies:
+    The big step reduction relation $\succ$ is the smallest transitive and reflexive relation which satisfies:
     \begin{align*}
         \proc{t u}{\pi} & \succ \proc{t}{u\pi} \\
-        \proc{\lambda x. t}{u\pi} & \succ \proc{t[x := u]}{\pi} \\
+        \proc{\lambda x. t}{u\cdot \pi} & \succ \proc{t[x := u]}{\pi} \\
         \proc{\recN}{t_0 \cdot t_\successor \cdot 0 \cdot \pi} & \succ \proc{t_0}{\pi} \\
         \proc{\recN}{t_0 \cdot t_\successor \cdot \successor\ n \cdot \pi} & \succ \proc{\recN\ (t_\successor\ t_0)\ t_\successor\ n}{\pi} \\
         \proc{\recbool}{t_\true \cdot t_\false \cdot \true \cdot \pi} & \succ \proc{t_\true}{\pi} \\
         \proc{\recbool}{t_\true \cdot t_\false \cdot \false \cdot \pi} & \succ \proc{t_\false}{\pi} \\
-        \proc{\Phi}{H \cdot P \cdot C \cdot \overline{k}} & \succ P\ (C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ \overline{k+1}\ (C; \ge \overline{k} \mapsto z))) \\
+        \proc{\Phi}{H \cdot P \cdot C \cdot \overline{k}} & \succ P\ (C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ \overline{k+1}\ (C; \ge \overline{k} \mapsto z)))\\
+        &\text{\emnote{attention ce n'est pas une commande, il te manque une pile}}\\
         \proc{\cc}{t \cdot \pi} & \succ \proc{t}{\cont_\pi \cdot \pi} \\
         \proc{\cont_\pi}{t \cdot \pi'} & \succ \proc{t}{\pi}
     \end{align*}
-    All the syntactic sugar used in the rule for $\Phi$ will be defined in the following subsection.
+    All the syntactic sugar used in the rule for $\Phi$ will be defined in the following subsection. \emnote{Une solution pédagogique pour ça serait de
+    d'abord introduire toutes les règles, sauf cette pour $\Phi$, puis dire qu'on étend le langage avec cette instruction + la règle de réduction, une fois le sucre syntaxique défini.} 
 \end{definition}
+\emnote{Autre remarque, il faut bien avoir en tête que les différents récurseurs sont bloqués si on ne leur donne pas une valeur en dernier argument (l'entier ou le booléen). Ce n'est pas un problème, mais il faut l'avoir à l'esprit.}
 
 For $t, u \in \Lambda$, we write $t \succ u$ for $\forall \pi \in \Pi. \proc{t}{\pi} \succ \proc{u}{\pi}$.
 
@@ -103,7 +113,7 @@ For $t, u \in \Lambda$, we write $t \succ u$ for $\forall \pi \in \Pi. \proc{t}{
 
 \begin{description}
     \item[naturals] For $n \in \N$, we write $\overline{k}$ for $\successor^n\ 0$.
-    \item[if then else] We write $\iif\ t\ \tthen\ u\ \eelse\ v$ for $\recbool\ u\ v\ t$.
+    \item[if then else] We write $\iif\ t\ \tthen\ u\ \eelse\ v$ for $\recbool\ u\ v\ t$. \emnote{ça ne marche que pour $t$ valeur (i.e. $\in\{\true,\false\}$}
     \item[comparison] For $t, u \in \Lambda$, we use $\recN$ to define a term $t \le u$ such that for all $n, m \in \Lambda$
     \begin{align*}
         \overline{n} \le \overline{m} & \succ \true & \text{if $n \le m$} \\
@@ -117,6 +127,7 @@ For $t, u \in \Lambda$, we write $t \succ u$ for $\forall \pi \in \Pi. \proc{t}{
         (f; \ge \overline{n} \mapsto t)\ \overline{m} & \succ f\ \overline{m} & \text{if $m < n$} \\
         (f; \ge \overline{n} \mapsto t)\ \overline{m} & \succ t & \text{if $m \ge n$}
     \end{align*}
+    \emnote{Ici il faut le définir avec une pile, sinon on crée une ambiguïté avec la règle (push):  $\proc{(f; \ge \overline{n} \mapsto t)}{\overline{m}\cdot\pi} \succ \proc{ f}{\overline{m}\cdot \pi}$}
 
     We omit parentheses and write $(f; \ge k_1 \mapsto t_1; \ge k_2 \mapsto t_2; \dots; \ge k_n \mapsto t_n)$ for $((\dots((f; \ge k_1 \mapsto t_1); \ge k_2 \mapsto t_2))\dots)); \ge k_n \mapsto t_n)$
 \end{description}
@@ -126,6 +137,7 @@ For $t, u \in \Lambda$, we write $t \succ u$ for $\forall \pi \in \Pi. \proc{t}{
 \subsection{Logic}
 
 We take some model of $\N$.
+\emnote{ça on peut le dire après, quand on définit l'interprétation de réalisabilité}
 
 Atoms are defined as equalities of expressions built from variables and some fixed (possibly zero-ary) functions $f_1 : \N^{k_1} \rightarrow \N, \dots, f_n : \N^{k_n} \rightarrow \N$.
 We define formulas as
@@ -137,10 +149,12 @@ We define formulas as
     & \mid F \rightarrow G
 \end{align*}
 Later, when we say formula, we mean formula with no free variables.
+\emnote{Ici il y a un choix à faire, soit on se place dans l'arithmétique du 
+second-ordre (c'est le cadre pour lequel je t'ai montré les définitions au tableau, avec les formules données par $A,B ::= X(e_1,...e_k)\mid A \Rightarrow B \mid \forall x.A \mid \forall X.A$), soit dans l'arithmétique d'ordre supérieur, c'est-à-dire avec des formules avec un type de base pour les entiers $\iota$ et les propositions $o$ et des flèches: $\tau,\tau'::=\iota\mid o\mid \tau \to \tau'$, et donc des quantifications $\forall x^\tau.A$. Ça correspond au cadre définit page 4 dans cet article : \url{https://www.fing.edu.uy/~amiquel/publis/lics11.pdf}. Si ça ne te complique pas trop, je pense que c'est la bonne façon de faire (parce que de toute façon, si on définit une EF, au fond on a le cadre pour l'arithmétique d'ordre supérieur. En tout cas, on ne veut surtout pas avoir à parler d'ensembles (comme chez Krivine), ça complique pour rien.}
 
 Note that, since $\cc$ realizes Peirce's law, we do not need existential quantification since we can encode it as $\neg\forall\neg$ by De Morgan's law.
 
-\subsection{The Realizability Relation}
+\subsection{The Realizability Interpretation}
 
 Throughout the rest of the section, we fix a pole $\pole \subseteq \Lambda \times \Pi$ be a set of processes which is closed by anti-reduction, that is, for all processos $p$ and $q$, if $p \succ q$ and $q \in \pole$ then $p \in \pole$.
 
@@ -150,7 +164,7 @@ For a formula $F$, define $\Vert F \Vert \subseteq \Pi$ and $\vert F \vert \subs
     \Vert a \Vert & := \Pi\ \ \ \text{if $a$ is an atom which is true in the model of $\N$} \\
     \Vert a \Vert & := \emptyset\ \ \ \text{if $a$ is an atom which is false in the model of $\N$} \\
     \Vert \forall x \in X. G \Vert & := \bigcup_{x_0 \in X} \Vert G[x := x_0] \Vert \\
-    \Vert G \rightarrow H \Vert & := \{ t\pi \mid t \in \vert G \vert, \pi \in \Vert H \Vert \} \\
+    \Vert G \rightarrow H \Vert & := \{ t\cdot\pi \mid t \in \vert G \vert, \pi \in \Vert H \Vert \} \\
     \Vert \depforall{x} G \Vert & := \{ \overline{n}\pi \mid n \in \N, \pi \in \Vert G[x := n] \Vert \} \\
     \vert F \vert & := \{ t \in \Lambda \mid \forall \pi \in \Vert F \Vert. \proc{t}{\pi} \in \pole \}
 \end{align*}
