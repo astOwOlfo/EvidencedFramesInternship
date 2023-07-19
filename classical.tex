@@ -12,6 +12,7 @@
 \usepackage{hyperref}
 \usepackage{cleveref}
 \usepackage{soul}
+\usepackage{stmaryrd}
 % \usepackage[a4paper, bindingoffset=0cm, left=1cm, right=1cm top=2cm, bottom=3cm, footskip=1cm]{geometry}
 
 % \usepackage{xcolor} \pagecolor[rgb]{0,0,0} \color[rgb]{1,1,1}
@@ -30,11 +31,25 @@
 \newcommand{\eelse}{\mathsf{else}}
 \newcommand{\tthen}{\mathsf{then}}
 \newcommand{\depforall}[1]{\forall^\N #1.}
-\newcommand{\pole}{\bot\mkern-10mu\bot}
+\newcommand{\pole}{{\bot\mkern-10mu\bot}}
 \newcommand{\realizes}{\Vdash}
 \newcommand{\oracle}[2]{\lambda\mkern-15mu\lambda\ #1. #2}
 \newcommand{\cc}{\mathsf{cc}}
 \newcommand{\cont}{\mathsf{k}}
+\newcommand{\prop}{\mathsf{prop}}
+\newcommand{\recnat}[1]{\mathsf{recnat}_{#1}}
+\newcommand{\typeinterp}[1]{{\llbracket #1 \rrbracket}}
+\newcommand{\terminterp}[2]{\Vert #1 \Vert_{#2}}
+\newcommand{\truthinterp}[2]{\vert #1 \vert_{#2}}
+\newcommand{\powerset}[1]{\mathcal{P}(#1)}
+\newcommand{\eid}{e_\mathsf{id}}
+\newcommand{\etop}{e_\mathsf{top}}
+\newcommand{\econj}[2]{<|#1, #2|>}
+\newcommand{\efst}{e_\mathsf{fst}}
+\newcommand{\esnd}{e_\mathsf{snd}}
+\newcommand{\eeval}{e_\mathsf{eval}}
+\newcommand{\elambda}[1]{\lambda #1}
+\newcommand{\emptyval}{{\rho_\mathsf{empty}}}
 
 \newtheorem{definition}{Definition}
 \newtheorem{lemma}{Lemma}
@@ -42,14 +57,8 @@
 \newtheorem{fact}{Fact}
 \newtheorem{corollary}{Corollary}
 \newtheorem{claim}{Claim}
-\newtheorem{property}{Property}
-
-\usepackage[nomargin,inline, draft]{fixme}
-% fixme package settings
-\fxusetheme{color}
-\fxuseenvlayout{color}
-\FXRegisterAuthor{em}{aem}{\color{purple}[\'E]}
-\FXRegisterAuthor{vi}{avi}{\color{teal}[V]}
+\newtheorem{property}{Propetry}
+\newtheorem{notation}{Notation}
 
 \title{Computational Content of the Classical Axiom of Countable Choice}
 \author{Vladimir Ivanov}
@@ -66,22 +75,33 @@
     The notions of free variable and closed term are defined as usual.
     We define the set $\Lambda_{open}$ of not necessarily closed lambda terms, and take $\Lambda$ to be the set of closed terms of $\Lambda_{open}$. When we say lambda term, we mean closed lambda term. $\Lambda_{open}$ is defined as follows
     \begin{align*}
-        \Lambda_{open} := & \mid var \in \mathsf{Var} \\
+        \Lambda_{open} := & \mid x \in \mathsf{Var} \\
         & \mid \Lambda_{open}\ \Lambda_{open} \\
         & \mid \lambda x. \Lambda_{open} & \text{where $x \in \mathsf{Var}$} \\
         & \mid 0 \mid \successor \mid \recN & \text{constructors and the recursor for $\N$}\\
         & \mid \true \mid \false \mid \recbool & \text{constructors and the recursor for $\bool$}\\
         & \mid \Phi & \text{the bar recursion operator} \\
-        & \mid \cc \mid \cont_\pi & \text{where $\pi$ is a stack}
+        & \mid \oracle{n}{t_n} \text{ where $(t_n)_{n \in \N} \subseteq \N$} & \text{when applied to $\successor^n 0$, reduces to $t_n$} \\
+        & \mid \cc & \text{call/cc} \\
+        & \mid \cont_\pi & \text{continuation, where $\pi$ is a stack}
     \end{align*}
+\end{definition}
+
+\begin{definition}[Prooflike Term]
+    A lambda term is prooflike if it does not contain $\oracle{}{}$.
 \end{definition}
 
 \begin{definition}[Stacks]
     A stack is a finite list of closed lambda terms.
     We let $\Pi$ be the set of all stacks.
     We write $t \cdot \pi$ for prepending a lambda term to a stack and $\pi \cdot \pi'$ for concatenating two stacks. We write $\emptystack$ for the empty stack.
-    We sometimes omit the $\cdot$. \emnote{Ce serait mieux en écrivant toujours $\cdot$!}
 \end{definition}
+
+\begin{notation}
+    Let $\vec{t} \subseteq \Lambda$ and $\vec{\pi} \subseteq \Pi$.
+    We write $\vec{t} \cdot \vec{\pi}$ for $\{ t \cdot \pi \mid t \in \vec{t}, \pi \in \vec\pi \}$.
+    For $t \in \Lambda$ and $\pi \in \Pi$, we write $t \cdot \vec\pi$ for $\{ t \} \cdot \vec\pi$ and $\vec{t} \cdot \pi$ for $\vec{t} \cdot \{ \pi \}$.
+\end{notation}
 
 \begin{definition}[Process]
     A process is a pair $\proc{t}{\pi}$ of a lambda term and a stack.
@@ -89,23 +109,20 @@
 \end{definition}
 
 \begin{definition}[Reduction Relation]
-    The big step reduction relation $\succ$ is the smallest transitive and reflexive relation which satisfies:
+    The big step reduction relation $\succ$ is the smallost transitive and reflexive relation which staisfies:
     \begin{align*}
         \proc{t u}{\pi} & \succ \proc{t}{u\pi} \\
-        \proc{\lambda x. t}{u\cdot \pi} & \succ \proc{t[x := u]}{\pi} \\
+        \proc{\lambda x. t}{u\pi} & \succ \proc{t[x := u]}{\pi} \\
         \proc{\recN}{t_0 \cdot t_\successor \cdot 0 \cdot \pi} & \succ \proc{t_0}{\pi} \\
         \proc{\recN}{t_0 \cdot t_\successor \cdot \successor\ n \cdot \pi} & \succ \proc{\recN\ (t_\successor\ t_0)\ t_\successor\ n}{\pi} \\
         \proc{\recbool}{t_\true \cdot t_\false \cdot \true \cdot \pi} & \succ \proc{t_\true}{\pi} \\
         \proc{\recbool}{t_\true \cdot t_\false \cdot \false \cdot \pi} & \succ \proc{t_\false}{\pi} \\
-        \proc{\Phi}{H \cdot P \cdot C \cdot \overline{k}} & \succ P\ (C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ \overline{k+1}\ (C; \ge \overline{k} \mapsto z)))\\
-        &\text{\emnote{attention ce n'est pas une commande, il te manque une pile}}\\
+        \proc{\Phi}{H \cdot P \cdot C \cdot \overline{k} \cdot \pi} & \succ \proc{P\ (C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ \overline{k+1}\ (C; \ge \overline{k} \mapsto z)))}{\pi} \\
         \proc{\cc}{t \cdot \pi} & \succ \proc{t}{\cont_\pi \cdot \pi} \\
         \proc{\cont_\pi}{t \cdot \pi'} & \succ \proc{t}{\pi}
     \end{align*}
-    All the syntactic sugar used in the rule for $\Phi$ will be defined in the following subsection. \emnote{Une solution pédagogique pour ça serait de
-    d'abord introduire toutes les règles, sauf cette pour $\Phi$, puis dire qu'on étend le langage avec cette instruction + la règle de réduction, une fois le sucre syntaxique défini.} 
+    All the syntactic sugar used in the rule for $\Phi$ will be defined in the following subsection.
 \end{definition}
-\emnote{Autre remarque, il faut bien avoir en tête que les différents récurseurs sont bloqués si on ne leur donne pas une valeur en dernier argument (l'entier ou le booléen). Ce n'est pas un problème, mais il faut l'avoir à l'esprit.}
 
 For $t, u \in \Lambda$, we write $t \succ u$ for $\forall \pi \in \Pi. \proc{t}{\pi} \succ \proc{u}{\pi}$.
 
@@ -113,7 +130,7 @@ For $t, u \in \Lambda$, we write $t \succ u$ for $\forall \pi \in \Pi. \proc{t}{
 
 \begin{description}
     \item[naturals] For $n \in \N$, we write $\overline{k}$ for $\successor^n\ 0$.
-    \item[if then else] We write $\iif\ t\ \tthen\ u\ \eelse\ v$ for $\recbool\ u\ v\ t$. \emnote{ça ne marche que pour $t$ valeur (i.e. $\in\{\true,\false\}$}
+    \item[if then else] We write $\iif\ t\ \tthen\ u\ \eelse\ v$ for $\recbool\ u\ v\ t$.
     \item[comparison] For $t, u \in \Lambda$, we use $\recN$ to define a term $t \le u$ such that for all $n, m \in \Lambda$
     \begin{align*}
         \overline{n} \le \overline{m} & \succ \true & \text{if $n \le m$} \\
@@ -127,7 +144,6 @@ For $t, u \in \Lambda$, we write $t \succ u$ for $\forall \pi \in \Pi. \proc{t}{
         (f; \ge \overline{n} \mapsto t)\ \overline{m} & \succ f\ \overline{m} & \text{if $m < n$} \\
         (f; \ge \overline{n} \mapsto t)\ \overline{m} & \succ t & \text{if $m \ge n$}
     \end{align*}
-    \emnote{Ici il faut le définir avec une pile, sinon on crée une ambiguïté avec la règle (push):  $\proc{(f; \ge \overline{n} \mapsto t)}{\overline{m}\cdot\pi} \succ \proc{ f}{\overline{m}\cdot \pi}$}
 
     We omit parentheses and write $(f; \ge k_1 \mapsto t_1; \ge k_2 \mapsto t_2; \dots; \ge k_n \mapsto t_n)$ for $((\dots((f; \ge k_1 \mapsto t_1); \ge k_2 \mapsto t_2))\dots)); \ge k_n \mapsto t_n)$
 \end{description}
@@ -136,139 +152,268 @@ For $t, u \in \Lambda$, we write $t \succ u$ for $\forall \pi \in \Pi. \proc{t}{
 
 \subsection{Logic}
 
-We take some model of $\N$.
-\emnote{ça on peut le dire après, quand on définit l'interprétation de réalisabilité}
+We define higher order logic in this section.
 
-Atoms are defined as equalities of expressions built from variables and some fixed (possibly zero-ary) functions $f_1 : \N^{k_1} \rightarrow \N, \dots, f_n : \N^{k_n} \rightarrow \N$.
-We define formulas as
-\begin{align*}
-    F, G, \dots := & \mid A & \text{where $A$ is an atom} \\
-    & \mid x & \text{where $x$ is a variable name taken from countably infinite set} \\
-    & \mid \forall x \in X. F & \text{where $X$ is a set and $x$ is a variable name free in $F$} \\
-    & \mid \depforall{n} F & \text{where $x$ is a variable name free in $F$} \\
-    & \mid F \rightarrow G
-\end{align*}
-Later, when we say formula, we mean formula with no free variables.
-\emnote{Ici il y a un choix à faire, soit on se place dans l'arithmétique du 
-second-ordre (c'est le cadre pour lequel je t'ai montré les définitions au tableau, avec les formules données par $A,B ::= X(e_1,...e_k)\mid A \Rightarrow B \mid \forall x.A \mid \forall X.A$), soit dans l'arithmétique d'ordre supérieur, c'est-à-dire avec des formules avec un type de base pour les entiers $\iota$ et les propositions $o$ et des flèches: $\tau,\tau'::=\iota\mid o\mid \tau \to \tau'$, et donc des quantifications $\forall x^\tau.A$. Ça correspond au cadre définit page 4 dans cet article : \url{https://www.fing.edu.uy/~amiquel/publis/lics11.pdf}. Si ça ne te complique pas trop, je pense que c'est la bonne façon de faire (parce que de toute façon, si on définit une EF, au fond on a le cadre pour l'arithmétique d'ordre supérieur. En tout cas, on ne veut surtout pas avoir à parler d'ensembles (comme chez Krivine), ça complique pour rien.}
+\begin{description}
+    \item[types] Types are syntactically defined as $\tau, \sigma, \dots := \nat \mid \prop \mid \tau \rightarrow \sigma$
+    \item[variables] For each type $\tau$, take a countably infinite set of variables of this type denoted $x^\tau, y^\tau, \dots$ or $x, y, \dots$.
+    \item[terms] Terms are tied with a type and defined inductively as follows
+    \begin{description}
+        \item[variable] If $x^\tau$ is a variable of type $\tau$, then $x^\tau$ is a term of type $\tau$.
+        \item[abstraction] If $x^\tau$ is a variable of type $\tau$ and $M$ is a term of type $\sigma$, then $\lambda x^\tau. M$ is a term of type $\tau \rightarrow \sigma$.
+        \item[application] If $M$ is a term of type $\tau \rightarrow \sigma$ and $N$ is a term of type $\tau$, then $MN$ is a term of type $\sigma$.
+        \item[zero] $0$ is a term of type $\nat$.
+        \item[successor] $\successor$ is a term of type $\nat \rightarrow \nat$.
+        \item[recursor for naturals] For every type $\tau$, $\recnat\tau$ is a term of type $\tau \rightarrow (\nat \rightarrow \tau \rightarrow \tau) \rightarrow \nat \rightarrow \tau$.
+        \item[implication] If $M$ and $N$ are terms of type $\prop$, then $M \Rightarrow N$ is a term of type $\prop$.
+        \item[universal quantification] If $x^\tau$ is a variable of type $\tau$ and $M$ is a term of type $\prop$, then $\forall x^\tau. M$ is a term of type $\prop$.
+        \item[dependent universal quantification] If $x^\nat$ is a variable of type $\nat$ and $M$ is a formula of type $\prop$, then $\depforall{x} M$ is a formula of type $\prop$.
+        \item[equality] If $M$ and $N$ are terms of type $\nat$, then $M = N$ is a term of type $\prop$ (should I define equality for any type?).
+        \item[top and bottom] $\top$ and $\bot$ are formulas of type $\prop$.
+    \end{description}
+\end{description}
 
-Note that, since $\cc$ realizes Peirce's law, we do not need existential quantification since we can encode it as $\neg\forall\neg$ by De Morgan's law.
+As usual, we write $\neg M$ for $M \rightarrow \bot$.
 
-\subsection{The Realizability Interpretation}
+\subsection{The Realizability Relation}
 
-Throughout the rest of the section, we fix a pole $\pole \subseteq \Lambda \times \Pi$ be a set of processes which is closed by anti-reduction, that is, for all processos $p$ and $q$, if $p \succ q$ and $q \in \pole$ then $p \in \pole$.
+\begin{definition}[interpretation of types]
+    The interpretation $\typeinterp{\tau}$ of a type $\tau$ is a set defined by induction over the syntax of $\tau$ by
+    \begin{align*}
+        \typeinterp{\nat} & := \N \\
+        \typeinterp{\prop} & := \powerset{\Pi} \\
+        \typeinterp{\tau \rightarrow \sigma} & := \typeinterp{\sigma}^\typeinterp{\tau}
+    \end{align*}
+\end{definition}
 
-For a formula $F$, define $\Vert F \Vert \subseteq \Pi$ and $\vert F \vert \subseteq \Lambda$ by structural induction over the syntax of $F$ as follows:
-\begin{align*}
-    \Vert \bot \Vert & := \Pi \\
-    \Vert a \Vert & := \Pi\ \ \ \text{if $a$ is an atom which is true in the model of $\N$} \\
-    \Vert a \Vert & := \emptyset\ \ \ \text{if $a$ is an atom which is false in the model of $\N$} \\
-    \Vert \forall x \in X. G \Vert & := \bigcup_{x_0 \in X} \Vert G[x := x_0] \Vert \\
-    \Vert G \rightarrow H \Vert & := \{ t\cdot\pi \mid t \in \vert G \vert, \pi \in \Vert H \Vert \} \\
-    \Vert \depforall{x} G \Vert & := \{ \overline{n}\pi \mid n \in \N, \pi \in \Vert G[x := n] \Vert \} \\
-    \vert F \vert & := \{ t \in \Lambda \mid \forall \pi \in \Vert F \Vert. \proc{t}{\pi} \in \pole \}
-\end{align*}
+\begin{definition}[valuation]
+    A valuation $\rho$ is a partial function from the set of variables which to each variable of type $\tau$ associates an element of the set $\typeinterp{\tau}$. We furthermore require that $\rho$ be defined at at most finitely many points.
+
+    For a valuation $\rho$, variable $x$ of type $\tau$, and $y \in \typeinterp{\tau}$, we write $\rho; x \mapsto y$ for $x' \mapsto \begin{cases} y & \text{if $x' = x$} \\ \rho(x') & \text{otherwise} \end{cases}$.
+
+    The empty valuation $\emptyval$ is the valuation defined nowhere.
+\end{definition}
+
+\begin{definition}
+    For $\vec\pi \subseteq \Pi$, let
+    \[\vec\pi^\pole \subseteq \Lambda = \{ t \in \Lambda \mid \forall \pi \in \vec\pi. \proc{t}{\pi} \in \pole \}\]
+\end{definition}
+
+\begin{definition}[intetrpretation of terms]
+    Let $\rho$ be a valuation.
+    For a term $M$ of type $\tau$ such that $\rho$ is defined at all the free variables of $M$, we define an interpretation $\terminterp{M}{\rho}$ by syntactic induction over $M$ as follows
+    \begin{align*}
+        \terminterp{x}{\rho} & := \rho(x) \\
+        \terminterp{\lambda x^\tau. M}{\rho} & := v \in \typeinterp{\tau} \mapsto \terminterp{M}{\rho; x \mapsto v} \\
+        \terminterp{MN}{\rho} & := \terminterp{M}{\rho}(\terminterp{N}{\rho}) \\
+        \terminterp{0}{\rho} & := 0 \\
+        \terminterp{\successor}{\rho} & := n \mapsto n + 1 \\
+        \terminterp{\recnat{\tau}}{\rho} & := P_0 \mapsto P_\successor \mapsto n \mapsto \begin{cases} P_0 & \text{if $n = 0$} \\ P_\successor(\terminterp{\recnat{\tau}}{\rho}(P_0)(P_\successor)(n-1)) & \text{otherwise} \end{cases} \\
+        \terminterp{M = N}{\rho} & := \begin{cases} \emptyset & \text{if $\terminterp{M}{\rho} = \terminterp{N}{\rho}$ in the standard model of $\N$} \\
+        \powerset{\Pi} & \text{otherwise} \end{cases} \\
+        \terminterp{M \Rightarrow N}{\rho} & := \terminterp{M}{\rho}^\pole \cdot \terminterp{N}{\rho} \\
+        \terminterp{\forall x^\tau. M}{\rho} & := \bigcup_{v \in \typeinterp{\tau}} \terminterp{M}{\rho, x \mapsto v} \\
+        \terminterp{\depforall{x} M}{\rho} & := \bigcup_{n \in \N} \overline{n} \cdot \terminterp{M}{\rho; x \mapsto n} \\
+        \terminterp{\top}{\rho} & := \emptyset \\
+        \terminterp{\bot}{\rho} & := \powerset{\Pi} \\
+    \end{align*}
+\end{definition}
+
+\begin{notation}
+    Let $M$ be a formula, $t$ be a term, and $\vec\pi \subset \Pi$.
+    We write $\truthinterp{M}{\rho}$ for $\terminterp{M}{\rho}^\pole$, $t \realizes_\rho M$ for $t \in \truthinterp{M}{\rho}$, and $t \realizes \vec\pi$ for $t \in \vec\pi^\pole$.
+
+    We write $\terminterp{\cdot}{}$ for $\terminterp{\cdot}{\emptyval}$, $\truthinterp{\cdot}{}$ for $\truthinterp{\cdot}{\emptyval}$, and $\realizes$ for $\realizes_\emptyval$.
+\end{notation}
 
 \subsection{Properties}
 
 \begin{property}
-    If $t \succ u$ and $u \realizes t$, then $t \realizes u$.
+    If $t \succ u$ and $u \realizes_\rho M$, then $t \realizes_\rho M$.
 \end{property}
 
+\begin{proof}
+    Suppose $t \succ u$ and $u \realizes_\rho M$, that is, $\forall \pi \in \terminterp{M}{\rho}. \proc{u}{\pi} \in \pole$.
+    Let $\pi \in \terminterp{M}{\rho}$, we need to show that $\proc{t}{\pi} \in \pole$.
+    This is true because $\proc{t}{\pi} \succ \proc{u}{\pi}$.
+\end{proof}
+
 \begin{property}\label{impliesintro}
-    $t \realizes A \rightarrow B$ if and only if $\forall u \realizes A. t u \realizes B$.
+    $t \realizes_\rho M \rightarrow N$ if and only if $\forall u \in \Lambda. u \realizes_\rho M \Rightarrow t u \realizes_\rho N$.
 \end{property}
+
+\begin{proof}
+    \
+    \begin{description}
+        \item[$\Rightarrow$ direction] Suppose $t \realizes_\rho M \rightarrow N$ and let $u \in \Lambda$ be such that $u \realizes_\rho M$.
+        Let $\pi \in \terminterp{N}{\rho}$.
+        We need to show that $\proc{tu}{\pi} \in \pole$.
+        But $\proc{tu}{\pi} \succ \proc{t}{u\pi}$ and $\proc{t}{u\pi} \in \pole$ since $u\pi \in \terminterp{M \rightarrow N}{\rho}$.
+        \item[$\Leftarrow$ direction] Suppose $\forall u \in \Lambda. u \realizes_\rho M \Rightarrow t u \realizes_\rho N$.
+        Let $\pi \in \terminterp{M \rightarrow N}{\rho}$, that is, $\pi = u \cdot \pi'$ for some $u \in \truthinterp{M}{\rho}$ and $\pi' \in \terminterp{N}{\rho}$.
+        We need to show that $\proc{t}{u \cdot \pi'} \in \pole$.
+        It suffices to show that $\proc{tu}{\pi'} \in \pole$, which is the case since $tu \realizes_\rho N$ and $\pi' \in \terminterp{N}{\rho}$.
+    \end{description}
+\end{proof}
+
+\begin{property}[Consistency]
+    There is no $t, \rho$ such that $t \realizes_\rho \bot$.
+\end{property}
+
+\begin{proof}
+    Suppose for the sake of contradiction that $t \realizes_\rho \bot$.
+    Then, for all $\pi \in \terminterp{\bot}{\rho} = \powerset{Pi}$, $\proc{t}{\pi} \in \pole$. We have to take a pole for which this yields to a contradiction.
+\end{proof}
 
 \begin{property}
     If $t \realizes \bot$ then $t \realizes F$ for all formula $F$.
 \end{property}
 
-\begin{property}[Consistency]
-    There is no realizer of $\bot$.
+\begin{proof}
+    By consistency, there is no such $t, \rho$.
+\end{proof}
+
+\begin{property}
+    $t \realizes_\rho \depforall{x} M$ if and only if for all $n \in \N$, $t \overline{n} \realizes_{\rho; x \mapsto \overline{n}} M$.
 \end{property}
+
+\begin{proof}
+    \
+    \begin{description}
+        \item[$\Rightarrow$ direction] Suppose $t \realizes_\rho \depforall{x} M$.
+        Let $n \in \N$ and $\pi \in \terminterp{M}{\rho; x \mapsto \overline{n}}$.
+        We need to show that $\proc{t \overline{n}}{\pi} \in \pole$.
+        It suffices to show that $\proc{t}{\overline{n}\cdot\pi} \in \pole$, which is the case since $\overline{n} \cdot \pi \in \overline{n} \cdot \terminterp{M}{\rho; m \mapsto \overline{n}} \subseteq \terminterp{M}{\rho}$.
+        \item[$\Leftarrow$ direction] Suppose that for all $n$, $t \overline{n} \realizes_{\rho; x \mapsto \overline{n}} M$.
+        Let $n \in \N$ and $\pi \in \terminterp{M}{\rho; x \mapsto \overline{n}}$.
+        We need to show that $\proc{t}{\overline{n} \cdot \pi} \in \pole$. ???
+    \end{description}
+\end{proof}
 
 \begin{property}[Continuity]
     Let $t$ be a term with one free variable $x$.
-    Let $F$ be a formula.
+    Let $M$ be a formula.
     Let $u_0, u_1, \dots \in \Lambda$.
-    Suppose that $t[x := \oracle{n}{u_n}] \realizes F$.
-    Then there exists $N \in \N$ such that for all $f \in \Lambda$ such that $\forall n < N.\ f\ \overline{n} \succ u_n$ we have $t[x := f] \realizes F$.
+    Suppose that $t[x := \oracle{n}{u_n}] \realizes M$.
+    Then there exists $N \in \N$ such that for all $f \in \Lambda$ such that $\forall n < N.\ f\ \overline{n} \succ u_n$ we have $t[x := f] \realizes M$.
 \end{property}
 
+\section{The Induced Evidenced Frame}
 
-\section{Realizability of Countable Choice}
+\begin{definition}
+    Define an evidenced frame by taking
+    \begin{description}
+        \item[propositions] $\Phi$ is $\powerset{\Pi}$
+        \item[evidence] $E$ is the set of prooflike lambda terms.
+        \item[evidence relation] For $\phi_1, \phi_2 \in \Phi$ and $e \in E$, $\phi_1 \xrightarrow{e} \phi_2$ if and only if $\forall t \in \Lambda. t \realizes \phi_1 \Rightarrow e t \realizes \phi_2$.
+        \item[top] $\top = \emptyset$.
+        \item[conjunction] For $\phi_1, \phi_2 \in \Phi$, $\phi_1 \wedge \phi_2$ is $\bigcup_{\phi \in \Phi} (\phi_1^\pole \cdot \phi_2^\pole \cdot \phi)^\pole \cdot \phi$.
+        \item[universal implication] For $\phi_1 \in \Phi$ and $\vec\phi \subseteq \Phi$, $\phi_1 \supset \vec\phi$ is $\phi_1^\pole \cdot \bigcup \vec\phi$.
+    \end{description}
+\end{definition}
 
-Throughout this section, let $I$ be a set and $R: \N \times I \rightarrow \mathcal{P}(\Pi)$.
-We define
-\[AC_\N := (\forall n. \neg \forall i. \neg R(n, i)) \rightarrow \neg \forall f. \neg \forall n. R(n, f(n))\]
-
-\begin{theorem} We have
-    \[ \lambda H.\ \lambda P.\ \Phi\ H\ P\ \overline{0}\ \overline{0} \realizes AC_\N \]
+\begin{theorem}
+    The evidenced frame defined above is an evidenced frame.
 \end{theorem}
 
 \begin{proof}
+    \
+    \begin{description}
+        \item[reflexivity] Take $\eid = \lambda x. x$. If $t \realizes F$ then $\eid t \realizes F$ since $\eid t \succ t$.
+        \item[top] Take $\etop = \lambda x. x$. If $t \realizes F$ then $\etop t \realizes \top$ since every lambda term realizes $\top$, which can be seen by unfolding the definitions of $\top$ and $\realizes$.
+        \item[conjunction elimination] Take $\efst = \lambda t. t (\lambda x. \lambda y. x)$.
+        $\lambda x. \lambda y. x \realizes \phi_1 \rightarrow \phi_2 \rightarrow \phi_1$ so $\lambda x. \lambda y. x \realizes \phi_1^\top \cdot \phi_2^\top \cdot \phi_1$.
+        Thus if $t \realizes \phi_1 \wedge \phi_2$ we have $t \realizes (\phi_1 \rightarrow \phi_2 \rightarrow \phi_1) \rightarrow \phi_1$ so $t (\lambda x. \lambda y. x) \realizes \phi_1$ and thus $\efst t \realizes \phi_1$.
+        We do the same thing for $\esnd$.
+        \item[conjunction introduction] Take $\econj{e_1}{e_2} = \lambda t. t e_1 e_2$.
+        Suppose $e_1 \realizes \phi_1$ and $e_2 \realizes \phi_2$.
+        We need to show $\econj{e_1}{e_2} \realizes \phi_1 \wedge \phi_2$.
+        Let $\phi \in \Phi$ and $t \realizes \phi_1 \rightarrow \phi_2 \rightarrow \phi$.
+        It suffices to show $t e_1 e_2 \realizes \phi$, which is the case.
+        \item[universal implication introduction] Take $\lambda{e} = \lambda t. \lambda u. e \econj{t}{u}$.
+        Let $\phi_1, \phi_2 \in \Phi$, $\vec\phi \subseteq \Phi$, and $e \in E$ such that $\forall \phi \in \vec\phi. \phi_1 \wedge \phi_2 \xrightarrow{e} \phi$.
+        We need to show that for all $t \realizes \phi_1$, $(\elambda{e}) t \realizes \phi_1 \supset \vec\phi$, that is, for all $u \realizes \phi_2$ and $\phi \in \vec\phi$, $(\elambda{e}) t u \realizes \phi$.
+        But $(\elambda{e}) t u \succ e \econj{t}{u}$, which concludes since $e \realizes \phi_1 \wedge \phi_2 \rightarrow \phi$ and $\econj{t}{u} \realizes \phi_1 \wedge \phi_2$.
+        \item[universal quantification elimination] Take $\eeval = \lambda t. (\efst t) (\esnd t)$.
+        Suppose $t \realizes (\phi_1 \supset \vec\phi) \wedge \phi_1$ and let $\phi \in \vec\phi$, we need to show $\eeval t \realizes \phi$.
+        It suffices to show $(\efst t) (\esnd t) \realizes \phi$, which is the case since $\efst t \realizes \phi_1^\top \phi$ and $\esnd \realizes \phi_1$.
+    \end{description}
+\end{proof}
+
+\section{Realizability of Countable Choice}
+
+Throughout this section, let $\tau$ be a type.
+We define
+\[AC_{\N, \tau} := \forall R^{\nat \rightarrow \tau \rightarrow \prop}. (\forall n^\nat. \neg \forall i^\tau. \neg R(n, i)) \rightarrow \neg \forall f^{\nat \rightarrow \tau}. \neg \forall n^\nat. R(n, f(n))\]
+
+\begin{theorem} We have
+    \[ \lambda H.\ \lambda P.\ \Phi\ H\ P\ \overline{0}\ \overline{0} \realizes AC_{\N, \tau} \]
+\end{theorem}
+
+\begin{proof}
+Let $R_0 \in \powerset{\Pi}^{\N \times \typeinterp{\tau}}$. Let $\rho = (\emptyval; R \mapsto R_0)$.
 
 Let
 \begin{align*}
-    H & \realizes \forall n. \neg \forall i. \neg R(n, i) \\
-    P & \realizes \forall f. \neg \depforall{n} R(n, f(n))
+    H & \realizes_\rho \forall n. \neg \forall i. \neg R(n, i) \\
+    P & \realizes_\rho \forall f. \neg \depforall{n} R(n, f(n))
 \end{align*}
 
 By \cref{impliesintro}, it is necessarily and sufficient to show that
-\[\Phi\ H\ P\ \overline{0}\ \overline{0} \realizes \bot \]
+\[\Phi\ H\ P\ \overline{0}\ \overline{0} \realizes_\rho \bot \]
 
 \begin{definition}[$<k$ -cache]
-    Let $k \in \N$. A $<k$ -cache is a term $C \in \Lambda$ such that $\forall n < k. \exists i. C\ \overline{n} \realizes R(n, i)$.
+    Let $k \in \N$. A $<k$ -cache is a term $C \in \Lambda$ such that $\forall n < k. \exists i. C\ \overline{n} \realizes_\rho R(n, i)$.
 \end{definition}
 
 \begin{lemma}\label{growcache}
     Let $k \in \N$.
     Let $C$ be a $< k$ -cache.
-    Suppose that $\Phi\ H\ P\ C\ \overline{k} \not\realizes \bot$.
-    Then, there exists $i_k$ and $r_k \realizes R(k, i_k)$ such that $\Phi\ H\ P\ (C; \ge \overline{k} \mapsto r_k)\ \overline{k+1} \not\realizes \bot$.
+    Suppose that $\Phi\ H\ P\ C\ \overline{k} \not\realizes_\rho \bot$.
+    Then, there exists $i_k$ and $r_k \realizes_\rho R(k, i_k)$ such that $\Phi\ H\ P\ (C; \ge \overline{k} \mapsto r_k)\ \overline{k+1} \not\realizes_\rho \bot$.
 
     Note that $(C; \ge \overline{k} \mapsto r_k)$ is then a $< k + 1$ -cache.
 \end{lemma}
 
 \begin{proof}
-    \ul{There exist $r_k \in \Lambda, i_k \in I$ such that $r_k \realizes R(k, i_k)$.} Indeed, if none did exists, then for all $i$, any term would realize $\neg R(k, i)$, thus, any term would realize $\forall i. \neg R(k, i)$. Thus, $H$ applied to any term would realize $\bot$, which contradicts consistency.
+    \ul{There exist $r_k \in \Lambda, i_k \in I$ such that $r_k \realizes_\rho R(k, i_k)$.} Indeed, if none did exists, then for all $i$, any term would realize $\neg R(k, i)$, thus, any term would realize $\forall i. \neg R(k, i)$. Thus, $H$ applied to any term would realize $\bot$, which contradicts consistency.
 
-    \ul{Now, suppose that for all $r_k, i_k$ such that $r_k \realizes R(k, i_k)$},
-    \[ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto r_k)\ \overline{k+1} \realizes \bot \]
+    \ul{Now, suppose that for all $r_k, i_k$ such that $r_k \realizes_\rho R(k, i_k)$},
+    \[ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto r_k)\ \overline{k+1} \realizes_\rho \bot \]
     \ul{it suffices to find a contradiction.} Then, for all $i$,
-    \[ \lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes \neg R(k, i) \]
+    \[ \lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes_\rho \neg R(k, i) \]
     and so by the hypothesis on $H$ and then by ???,
     \begin{align*}
-        H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes \neg R(k, i)) & \realizes \bot \\
-        & \realizes R(n, i) & \text{for all $n$ and $i$}
+        H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes_\rho \neg R(k, i)) & \realizes_\rho \bot \\
+        & \realizes_\rho R(n, i) & \text{for all $n$ and $i$}
     \end{align*}
 
-    Now, by definition of a cache, for all $n < k$, $C\ \overline{n} \realizes R(n, i)$ for some $i$.
+    Now, by definition of a cache, for all $n < k$, $C\ \overline{n} \realizes_\rho R(n, i)$ for some $i$.
     Let $f(n)$ be such an $i$ for $n < k$ and be arbitrary for $n \ge k$.
     Then,
-    \[(C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes \neg R(k, i))) \realizes \depforall{n} R(n, f(n))\]
+    \[(C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes_\rho \neg R(k, i))) \realizes_\rho \depforall{n} R(n, f(n))\]
     since this term applied to $n < k$ realizes $R(n, f(n))$ by the definition of a cache and this term applied to $n \ge k$ realizes $R(n, f(n))$ by the previous discussion.
     Thus,
-    \[P\ (C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes \neg R(k, i))) \realizes \depforall{n} R(n, f(n)) \realizes \bot\]
+    \[P\ (C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1} \realizes_\rho \neg R(k, i))) \realizes_\rho \depforall{n} R(n, f(n)) \realizes_\rho \bot\]
     But
     \[\Phi\ H\ P\ C\ \overline{k} \succ P\ (C; \ge \overline{k} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ (C; \ge \overline{k} \mapsto z)\ \overline{k+1}))\]
     So
-    \[\Phi\ H\ P\ C\ \overline{k} \realizes \bot\]
+    \[\Phi\ H\ P\ C\ \overline{k} \realizes_\rho \bot\]
     which was supposed to not hold.
 \end{proof}
 
 Now, suppose
-\[ \Phi\ H\ P\ \overline{0}\ \overline{0} \not\realizes \bot \]
+\[ \Phi\ H\ P\ \overline{0}\ \overline{0} \not\realizes_\rho \bot \]
 it is necessary and sufficient to find a contradiction.
 
 By applying \cref{growcache} repeatedly, we get a sequence $r_0, r_1, \dots$ such that each $r_n$ realizes $R(n, i)$ for some $i$.
 For each $n$, take $f_0(n)$ to be such an $i$.
 
-Then, for all $n$, $(\oracle{n}{r_n}) \overline{n} \realizes R(n, f_0(n))$.
-Thus, $\oracle{n}{r_n} \realizes \depforall{n} R(n, f_0(n))$ and so \[P\ (\oracle{n}{r_n}) \realizes \bot\]
+Then, for all $n$, $(\oracle{n}{r_n}) \overline{n} \realizes_\rho R(n, f_0(n))$.
+Thus, $\oracle{n}{r_n} \realizes_\rho \depforall{n} R(n, f_0(n))$ and so \[P\ (\oracle{n}{r_n}) \realizes_\rho \bot\]
 
-But then, by continuity, there exists $N$ such that for all $C$, if $\forall n < N.\ C\ \overline{n} \succ r_n$ then $P\ C \realizes \bot$. Thus, taking $C = (\overline{0}; \ge \overline{0} \mapsto r_0; \ge \overline{1} \mapsto r_1; \dots; \ge \overline{N-1} \mapsto r_{N-1}; \ge \overline{N} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ \overline{N+1}\ (C; \ge \overline{k} \mapsto z)))$, we have $P\ C \realizes \bot$ since $\forall n < N. C\ \overline{n} \succ r_n$.
-But $\Phi\ H\ P\ \overline{0}\ \overline{0} \succ P\ C$, so $\Phi\ H\ P\ overline{0}\ \overline{0} \realizes \bot$, which was supposed to not hold.
+But then, by continuity, there exists $N$ such that for all $C$, if $\forall n < N.\ C\ \overline{n} \succ r_n$ then $P\ C \realizes_\rho \bot$. Thus, taking $C = (\overline{0}; \ge \overline{0} \mapsto r_0; \ge \overline{1} \mapsto r_1; \dots; \ge \overline{N-1} \mapsto r_{N-1}; \ge \overline{N} \mapsto H\ (\lambda z.\ \Phi\ H\ P\ \overline{N+1}\ (C; \ge \overline{k} \mapsto z)))$, we have $P\ C \realizes_\rho \bot$ since $\forall n < N. C\ \overline{n} \succ r_n$.
+But $\Phi\ H\ P\ \overline{0}\ \overline{0} \succ P\ C$, so $\Phi\ H\ P\ \overline{0}\ \overline{0} \realizes_\rho \bot$, which was supposed to not hold.
 
 \end{proof}
 
