@@ -310,6 +310,17 @@ This property will be used a lot without being explicitly mentioned.
     Then $\lambda x. t \realizes_\rho \depforall{x} M$.
 \end{property}
 
+\begin{property}\label{depforallintrooracle}
+    Suppose for all $n \in \N$, $t_n \realizes_{\rho, x \mapsto \overline{n}} M$.
+    Then $\oracle{n}{t_n} \realizes_\rho \depforall{x} M$.
+\end{property}
+
+\begin{proof}
+    Let $\pi \in \terminterp{\depforall{x} M}{\rho}$, that is, $\pi = \overline{n} \cdot \pi'$ for some $n \in \N$ and $\pi' \in \terminterp{M}{\rho; x \mapsto \overline{n}}$.
+    We have to show that $\proc{\oracle{n}{t_n}}{\overline{n} \cdot \pi'} \in \pole$.
+    But this process reduces to $\proc{t_n}{\pi'}$ which is in the pole by hypothesis.
+\end{proof}
+
 \begin{proof}
     Let $\pi \in \terminterp{\depforall{x} M}{\rho}$, that is, $\pi = \overline{n} \cdot \pi'$ for some $n \in \N$ and $\pi' \in \terminterp{M}{\rho; x \mapsto \overline{n}}$.
     We need to show $\proc{\lambda x. t}{\overline{n} \cdot \pi'} \in \pole$.
@@ -424,7 +435,7 @@ By \cref{impliesintro}, it suffices to show that
     Since $\ell$ is a cache, for all $k < \length{\ell}$, there exists an $i_k \in \typeinterp{\tau}$ such that $\nth\ \overline{k}\ \ell \realizes_{\rho; i \mapsto i_k} R(\overline{k}, i)$. Define $f_0(k)$ to be such an $i$ for $k < \length{\ell}$ and an arbitrary element of $\typeinterp{\tau}$ for $k \ge \length{\ell}$ (this set is nonempty by \cref{typeinterpnonempty}).
 
     \ul{There exist $r_\length{\ell} \in \Lambda, i_\length{\ell} \in \typeinterp{\tau}$ such that $r_\length{\ell} \realizes_{\rho; i \mapsto i_\length{\ell}} R(\overline{\length\ell}, i)$.}
-    Indeed, if none did exists, then for all $i$, any term would realize $\neg R(\overline{\length\ell}, i)$, thus, any term would realize $\forall i. \neg R(\overline{\length{\ell}}, i)$.
+    Indeed, if none did exists\footnote{We use excluded middle in the metatheory here.}, then for all $i$, any term would realize $\neg R(\overline{\length\ell}, i)$, thus, any term would realize $\forall i. \neg R(\overline{\length{\ell}}, i)$.
     Thus, $H$ applied to any term would realize $\bot$, namely,
     \[ H\ (\lambda z.\ H\ P\ (l :: z)) \realizes_\rho \bot \].
     Thus
@@ -448,11 +459,11 @@ Now, suppose
 \[ \Phi\ H\ P\ [] \not\realizes_\rho \bot \]
 it suffices to find a contradiction.
 
-By applying \cref{growcache} repeatedly, we get a sequence $r_0, r_1, \dots$ such that for all $k$ there exists $i_k \in \typeinterp{i}$ such that $r_k \realizes_{i \mapsto i_k} R(\overline{k}, i)$.
+By applying \cref{growcache} repeatedly\footnote{We use the axiom of dependent choice in the metatheory here.}, we get a sequence $r_0, r_1, \dots$ such that for all $k$ there exists $i_k \in \typeinterp{i}$ such that $r_k \realizes_{i \mapsto i_k} R(\overline{k}, i)$.
 For each $k$, take $f_0(k)$ to be such an $i_k$.
 
 Then, for all $n$, $r_n \realizes_\rho R(\overline{n}, f_0(\overline{n}))$.
-Thus, $\oracle{n}{r_n} \realizes_\rho \depforall{n} R(n, f_0(n))$ and so \[P\ (\oracle{n}{r_n}) \realizes_\rho \bot\]
+Thus, by \cref{depforallintrooracle}, $\oracle{n}{r_n} \realizes_\rho \depforall{n} R(n, f_0(n))$ and so \[P\ (\oracle{n}{r_n}) \realizes_\rho \bot\]
 
 But then, by continuity, there exists $K$ such that for all $f$, if $\forall k < K.\ f\ \overline{k} \succ r_k$ then $P\ f \realizes_\rho \bot$.
 Now, take $\ell = [r_0, \dots, r_{K-1}]$ and $f = \lambda m. \nth\ m\ (\ell :: H\ (\lambda z. \ \Phi\ H\ P\ (\ell :: z)))$.
